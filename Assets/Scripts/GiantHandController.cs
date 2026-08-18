@@ -1,68 +1,85 @@
 using UnityEngine;
-using System.Collections;
 
 public class GiantHandController : MonoBehaviour
 {
-    [Header("Movement Settings")]
-    public float attackSpeed = 15f;
-    public float retreatSpeed = 25f;
-    public Transform playerTarget;
-    
-    [Header("Attack States")]
-    private bool isAttacking = false;
+    [Header("Movement Speeds")]
+    public float fastSpeed = 25f;     
+    public float creepSpeed = 1.5f;   
+    public float retreatSpeed = 40f;  
+
+    [Header("Distance Threshold")]
+    public float triggerDistance = 8f; 
+
+    private Transform playerTransform;
+    private Vector3 initialSpawnPos;
+    private bool isFastApproaching = false;
+    private bool isCreeping = false;
     private bool isRetreating = false;
-    private Vector3 startPosition;
 
-    public void TriggerAttack(Vector3 newStartPosition)
+    private void Start()
     {
-        if (!isAttacking && !isRetreating)
-        {
-            gameObject.SetActive(true); 
-            
-            transform.position = newStartPosition; 
-            startPosition = newStartPosition;      
+        // Force the hand to be hidden when the game starts
+        gameObject.SetActive(false);
+    }
 
-            isAttacking = true;
-            
-            FindAnyObjectByType<QTEManager>().StartQTE();
-        }
+    public void BeginAttack(Vector3 spawnPos, Transform player)
+    {
+        gameObject.SetActive(true);
+        
+        foreach (var renderer in GetComponentsInChildren<MeshRenderer>()) renderer.enabled = true;
+        foreach (var renderer in GetComponentsInChildren<SkinnedMeshRenderer>()) renderer.enabled = true;
+
+        transform.position = spawnPos;
+        initialSpawnPos = spawnPos;
+        playerTransform = player;
+        
+        transform.LookAt(player.position);
+
+        isFastApproaching = true;
+        isCreeping = false;
+        isRetreating = false;
     }
 
     private void Update()
     {
-        if (isAttacking && playerTarget != null)
+        if (playerTransform == null) return;
+
+        if (isFastApproaching)
         {
-            float step = attackSpeed * Time.unscaledDeltaTime;
-            transform.position = Vector3.MoveTowards(transform.position, playerTarget.position, step);
-            
-            if (Vector3.Distance(transform.position, playerTarget.position) < 2.0f)
+            transform.position = Vector3.MoveTowards(transform.position, playerTransform.position, fastSpeed * Time.deltaTime);
+            transform.LookAt(playerTransform.position);
+
+            if (Vector3.Distance(transform.position, playerTransform.position) <= triggerDistance)
             {
-                isAttacking = false; 
+                isFastApproaching = false;
+                isCreeping = true;
+                FindAnyObjectByType<QTEManager>().StartQTE();
             }
         }
-        
-        if (isRetreating)
+        else if (isCreeping)
         {
-            float step = retreatSpeed * Time.unscaledDeltaTime;
-            transform.position = Vector3.MoveTowards(transform.position, startPosition, step);
-            
-            if (Vector3.Distance(transform.position, startPosition) < 1.0f)
+            transform.position = Vector3.MoveTowards(transform.position, playerTransform.position, creepSpeed * Time.unscaledDeltaTime);
+        }
+        else if (isRetreating)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, initialSpawnPos, retreatSpeed * Time.unscaledDeltaTime);
+            if (Vector3.Distance(transform.position, initialSpawnPos) < 1f)
             {
+                gameObject.SetActive(false);
                 isRetreating = false;
-                gameObject.SetActive(false); 
             }
         }
     }
 
     public void DeflectHand()
     {
-        isAttacking = false;
+        isCreeping = false;
         isRetreating = true;
     }
 
     public void HandHitPlayer()
     {
-        isAttacking = false;
+        isCreeping = false;
         FindAnyObjectByType<GameManager>().TriggerGameOver("CRUSHED BY THE HAND!");
     }
 }

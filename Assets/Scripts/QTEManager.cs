@@ -138,15 +138,14 @@ public class QTEManager : MonoBehaviour
         
         if (success) 
         {
-            // AUDIO TRIGGER: Play the success clang!
             AudioManager.Instance.PlayParrySound();
             FindAnyObjectByType<GiantHandController>().DeflectHand();
         }
         else 
         {
-            // AUDIO TRIGGER: Play the death hit!
             AudioManager.Instance.PlayPlayerHit();
             FindAnyObjectByType<GiantHandController>().HandHitPlayer();
         }
     }
+
 }

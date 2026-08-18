@@ -2,20 +2,19 @@ using UnityEngine;
 
 public class TriggerAttack : MonoBehaviour
 {
-    [Header("Link your SINGLE Giant Hand here")]
-    public GiantHandController singleGiantHand;
-    
-    [Header("Where should it spawn relative to the trigger?")]
-    public Vector3 spawnOffset = new Vector3(-15f, 2f, 0f); 
+    [Header("References")]
+    public GiantHandController giantHand;
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            if (singleGiantHand != null)
+            if (giantHand != null)
             {
-                Vector3 attackStartPos = transform.position + spawnOffset;
-                singleGiantHand.TriggerAttack(attackStartPos);
+                // Player runs towards +x, so spawn ahead on X, matching player's height + an offset to avoid ground clipping
+                Vector3 spawnPos = new Vector3(other.transform.position.x + 25f, other.transform.position.y + 3f, other.transform.position.z);
+                
+                giantHand.BeginAttack(spawnPos, other.transform);
             }
             gameObject.SetActive(false); 
         }
