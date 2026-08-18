@@ -132,7 +132,7 @@ public class QTEManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.5f);
         qtePanel.SetActive(false);
         TimeManager.Instance.ResetTime();
-        if (success) FindFirstObjectByType<GiantHandController>().DeflectHand();
-        else FindFirstObjectByType<GiantHandController>().HandHitPlayer();
+        if (success) FindAnyObjectByType<GiantHandController>().DeflectHand();
+        else FindAnyObjectByType<GiantHandController>().HandHitPlayer();
     }
 }
