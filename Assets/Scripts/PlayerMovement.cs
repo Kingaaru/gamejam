@@ -14,7 +14,7 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask whatIsGround;
     private bool grounded;
 
-    public Transform orientation;
+    public Transform playerCamera; // Look here! We swapped Orientation for the Camera
     private float horizontalInput;
     private float verticalInput;
     private Vector3 moveDirection;
@@ -23,18 +23,16 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.freezeRotation = true; // Stops the player from falling over
+        rb.freezeRotation = true; 
     }
 
     void Update()
     {
-        // Shoots a laser down to check if you are touching the floor
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
         MyInput();
         SpeedControl();
 
-        // Adds drag on the ground so you don't slide like ice, but removes it in the air for parkour momentum
         if (grounded)
             rb.linearDamping = groundDrag;
         else
@@ -59,8 +57,15 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePlayer()
     {
-        // Calculate the direction based on where the player is looking
-        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        // Calculate direction directly from where the camera is looking
+        Vector3 forward = playerCamera.forward;
+        Vector3 right = playerCamera.right;
+        
+        // Flatten the Y axis so looking up doesn't make you fly into the sky
+        forward.y = 0f;
+        right.y = 0f;
+
+        moveDirection = forward.normalized * verticalInput + right.normalized * horizontalInput;
 
         if (grounded)
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
@@ -70,7 +75,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void SpeedControl()
     {
-        // Limits how fast the player can run on the ground
         Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
         if (flatVel.magnitude > moveSpeed)
@@ -82,7 +86,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void Jump()
     {
-        // Resets the Y velocity before jumping so you always jump the exact same height
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
     }
