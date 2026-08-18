@@ -1,19 +1,25 @@
 using UnityEngine;
+using System.Collections;
 
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance;
 
-    [Header("Audio Sources (Auto-Assigned in Awake)")]
-    public AudioSource musicSource;
-    public AudioSource sfxSource;
-    public AudioSource slowMoSource;
+    // We removed these from the Inspector. The script will build them automatically!
+    private AudioSource musicSource;
+    private AudioSource sfxSource;
+    private AudioSource slowMoSource;
 
-    [Header("Audio Clips")]
+    [Header("Audio Clips (Drag your 4 files here!)")]
     public AudioClip backgroundMusic;
     public AudioClip parryClang;
     public AudioClip slowMoWhoosh;
     public AudioClip playerHit;
+
+    [Header("Ducking Settings")]
+    public float normalVolume = 1f;
+    public float duckedVolume = 0.2f; 
+    private Coroutine duckingCoroutine;
 
     private void Awake()
     {
@@ -22,19 +28,15 @@ public class AudioManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // Automatically grab all AudioSource components attached to this object
-            AudioSource[] sources = GetComponents<AudioSource>();
-            
-            if (sources.Length >= 3)
-            {
-                musicSource = sources[0];
-                sfxSource = sources[1];
-                slowMoSource = sources[2];
-            }
-            else
-            {
-                Debug.LogError("CRITICAL: AudioManager needs exactly 3 Audio Source components attached to it!");
-            }
+            // ZERO INSPECTOR SETUP REQUIRED: Code creates the speakers for you!
+            musicSource = gameObject.AddComponent<AudioSource>();
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            slowMoSource = gameObject.AddComponent<AudioSource>();
+
+            // Force everything to play directly in the player's ears (2D)
+            musicSource.spatialBlend = 0f;
+            sfxSource.spatialBlend = 0f;
+            slowMoSource.spatialBlend = 0f;
         }
         else
         {
@@ -44,43 +46,56 @@ public class AudioManager : MonoBehaviour
 
     private void Start()
     {
-        PlayMusic(backgroundMusic);
-    }
-
-    public void PlayMusic(AudioClip musicClip)
-    {
-        if (musicSource != null && musicClip != null)
+        if (backgroundMusic != null)
         {
-            musicSource.clip = musicClip;
+            musicSource.clip = backgroundMusic;
+            musicSource.volume = normalVolume;
             musicSource.loop = true;
             musicSource.Play();
         }
     }
 
-    public void PlayParrySound()
-    {
-        Debug.Log("AudioManager: Playing Parry Sound!");
-        if (sfxSource != null && parryClang != null)
-        {
-            sfxSource.PlayOneShot(parryClang); 
-        }
-    }
-
-    public void PlaySlowMoEntry()
-    {
-        Debug.Log("AudioManager: Playing Slow Mo Whoosh!");
-        if (slowMoSource != null && slowMoWhoosh != null)
-        {
-            slowMoSource.PlayOneShot(slowMoWhoosh);
-        }
+    public void PlayParrySound() 
+    { 
+        if (parryClang != null) sfxSource.PlayOneShot(parryClang); 
+        TriggerDucking(1.2f); 
     }
     
-    public void PlayPlayerHit()
+    public void PlaySlowMoEntry() 
+    { 
+        if (slowMoWhoosh != null) slowMoSource.PlayOneShot(slowMoWhoosh); 
+        TriggerDucking(2.2f); 
+    }
+    
+    public void PlayPlayerHit() 
+    { 
+        if (playerHit != null) sfxSource.PlayOneShot(playerHit); 
+        TriggerDucking(1.2f);
+    }
+
+    private void TriggerDucking(float duration)
     {
-        Debug.Log("AudioManager: Playing Player Hit Sound!");
-        if (sfxSource != null && playerHit != null)
+        if (duckingCoroutine != null) StopCoroutine(duckingCoroutine);
+        duckingCoroutine = StartCoroutine(DuckMusicRoutine(duration));
+    }
+
+    private IEnumerator DuckMusicRoutine(float duration)
+    {
+        // Instantly lower the volume
+        musicSource.volume = duckedVolume;
+        
+        // Wait for the SFX to finish 
+        yield return new WaitForSecondsRealtime(duration);
+        
+        // Smoothly fade the music back up
+        float timer = 0f;
+        float fadeTime = 0.5f;
+        while (timer < fadeTime)
         {
-            sfxSource.PlayOneShot(playerHit);
+            timer += Time.unscaledDeltaTime;
+            musicSource.volume = Mathf.Lerp(duckedVolume, normalVolume, timer / fadeTime);
+            yield return null;
         }
+        musicSource.volume = normalVolume;
     }
 }

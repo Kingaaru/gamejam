@@ -22,7 +22,7 @@ public class QTEManager : MonoBehaviour
     public Sprite spriteRight;
     public Sprite spriteZ;
     public Sprite spriteX;
-    public Sprite spriteC; // Added your 8th key!
+    public Sprite spriteC; 
     public Sprite spriteV;
 
     private Dictionary<KeyCode, Sprite> iconDictionary = new Dictionary<KeyCode, Sprite>();
@@ -35,7 +35,6 @@ public class QTEManager : MonoBehaviour
     { 
         qtePanel.SetActive(false); 
         
-        // Map all 8 manually assigned sprites
         iconDictionary[KeyCode.UpArrow] = spriteUp;
         iconDictionary[KeyCode.DownArrow] = spriteDown;
         iconDictionary[KeyCode.LeftArrow] = spriteLeft;
@@ -61,6 +60,10 @@ public class QTEManager : MonoBehaviour
         isQTEActive = true;
         qtePanel.SetActive(true);
         TimeManager.Instance.StartSlowMotion();
+        
+        // AUDIO TRIGGER: Play the slow-mo whoosh and duck the phonk track!
+        AudioManager.Instance.PlaySlowMoEntry();
+        
         UpdateUI();
     }
 
@@ -132,7 +135,18 @@ public class QTEManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.5f);
         qtePanel.SetActive(false);
         TimeManager.Instance.ResetTime();
-        if (success) FindAnyObjectByType<GiantHandController>().DeflectHand();
-        else FindAnyObjectByType<GiantHandController>().HandHitPlayer();
+        
+        if (success) 
+        {
+            // AUDIO TRIGGER: Play the success clang!
+            AudioManager.Instance.PlayParrySound();
+            FindAnyObjectByType<GiantHandController>().DeflectHand();
+        }
+        else 
+        {
+            // AUDIO TRIGGER: Play the death hit!
+            AudioManager.Instance.PlayPlayerHit();
+            FindAnyObjectByType<GiantHandController>().HandHitPlayer();
+        }
     }
 }
