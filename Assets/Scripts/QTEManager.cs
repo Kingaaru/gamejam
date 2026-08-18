@@ -1,19 +1,25 @@
 using UnityEngine;
 using TMPro; 
 using System.Collections.Generic;
+using System.Collections; 
 
 public class QTEManager : MonoBehaviour
 {
     [Header("QTE Settings")]
-    public float qteTimeLimit = 3.0f; 
-    public int sequenceLength = 4;
+    public float qteTimeLimit = 5.0f; 
+    public int sequenceLength = 4; 
     
     [Header("UI References")]
     public TextMeshProUGUI qteDisplayText;
     public TextMeshProUGUI timerDisplayText;
     public GameObject qtePanel;
 
-    private KeyCode[] possibleKeys = { KeyCode.W, KeyCode.A, KeyCode.S, KeyCode.D, KeyCode.UpArrow, KeyCode.Mouse0, KeyCode.Mouse1 };
+    private KeyCode[] possibleKeys = { 
+        KeyCode.UpArrow, KeyCode.DownArrow, KeyCode.LeftArrow, KeyCode.RightArrow,
+        KeyCode.Z, KeyCode.X, KeyCode.C, KeyCode.V,
+        KeyCode.Mouse0, KeyCode.Mouse1 
+    };
+    
     private List<KeyCode> currentSequence = new List<KeyCode>();
     private int currentStepIndex = 0;
     private float qteTimer;
@@ -70,7 +76,17 @@ public class QTEManager : MonoBehaviour
             }
             else
             {
-                if (!Input.GetKeyDown(KeyCode.Mouse0) && !Input.GetKeyDown(KeyCode.Mouse1) && !Input.GetKeyDown(KeyCode.Mouse2))
+                bool wrongValidKeyPressed = false;
+                foreach (KeyCode key in possibleKeys)
+                {
+                    if (Input.GetKeyDown(key))
+                    {
+                        wrongValidKeyPressed = true;
+                        break;
+                    }
+                }
+
+                if (wrongValidKeyPressed)
                 {
                     ParryFailed("Wrong Key!");
                 }
@@ -83,10 +99,15 @@ public class QTEManager : MonoBehaviour
         string displayText = "";
         for (int i = 0; i < currentSequence.Count; i++)
         {
+            string keyName = currentSequence[i].ToString();
+            
+            if (keyName == "Mouse0") keyName = "LeftClick";
+            if (keyName == "Mouse1") keyName = "RightClick";
+
             if (i < currentStepIndex)
-                displayText += "<s><color=green>" + currentSequence[i].ToString() + "</color></s> ";
+                displayText += "<s><color=green>" + keyName + "</color></s> ";
             else
-                displayText += currentSequence[i].ToString() + " ";
+                displayText += keyName + " ";
         }
         qteDisplayText.text = displayText;
     }
@@ -94,26 +115,43 @@ public class QTEManager : MonoBehaviour
     private void ParrySuccess()
     {
         isQTEActive = false;
-        qtePanel.SetActive(false);
-        TimeManager.Instance.ResetTime();
-        
-        // This line plays the successful parry sound!
-        // AudioManager.Instance.PlayParrySound();
-        
-        Debug.Log("MASSIVE PARRY! Speed boost applied.");
-        FindAnyObjectByType<GiantHandController>().DeflectHand();
+        // Start the success coroutine to show the UI text before resetting
+        StartCoroutine(ShowSuccessMessage());
     }
 
     private void ParryFailed(string reason)
     {
-        isQTEActive = false;
+        isQTEActive = false; 
+        StartCoroutine(ShowFailMessage(reason));
+    }
+
+    private IEnumerator ShowSuccessMessage()
+    {
+        // Flash MASSIVE PARRY in green
+        qteDisplayText.text = "<color=green><b>MASSIVE PARRY!</b></color>";
+        
+        yield return new WaitForSecondsRealtime(1.0f);
+
+        // Resume normal success logic after the pause
         qtePanel.SetActive(false);
         TimeManager.Instance.ResetTime();
         
-        // This line plays the damage sound!
-        // AudioManager.Instance.PlayPlayerHit();
+        // AudioManager.Instance.PlayParrySound();
+        FindAnyObjectByType<GiantHandController>().DeflectHand();
+    }
+
+    private IEnumerator ShowFailMessage(string reason)
+    {
+        // Flash PARRY FAILED along with the specific reason in red
+        qteDisplayText.text = "<color=red><b>PARRY FAILED\n" + reason.ToUpper() + "</b></color>";
         
-        Debug.Log("PARRY FAILED: " + reason + " - Player takes damage!");
+        yield return new WaitForSecondsRealtime(1.0f);
+
+        // Resume normal failure logic
+        qtePanel.SetActive(false);
+        TimeManager.Instance.ResetTime();
+        
+        // AudioManager.Instance.PlayPlayerHit();
         FindAnyObjectByType<GiantHandController>().HandHitPlayer();
     }
 }
