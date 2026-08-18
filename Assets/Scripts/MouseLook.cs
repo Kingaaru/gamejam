@@ -5,8 +5,6 @@ public class MouseLook : MonoBehaviour
     public float sensX = 400f;
     public float sensY = 400f;
 
-    public Transform orientation;
-
     private float xRotation;
     private float yRotation;
 
@@ -29,8 +27,7 @@ public class MouseLook : MonoBehaviour
         // Clamp the camera so you can't look past straight up or straight down
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-        // Rotate camera and orientation
-        transform.rotation = Quaternion.Euler(xRotation, yRotation, 0);
-        orientation.rotation = Quaternion.Euler(0, yRotation, 0);
+        // Rotate only the camera on both X and Y axes
+        transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0);
     }
 }

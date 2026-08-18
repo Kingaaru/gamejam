@@ -4,7 +4,7 @@ public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance;
 
-    [Header("Audio Sources")]
+    [Header("Audio Sources (Auto-Assigned in Awake)")]
     public AudioSource musicSource;
     public AudioSource sfxSource;
     public AudioSource slowMoSource;
@@ -21,6 +21,20 @@ public class AudioManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            // Automatically grab all AudioSource components attached to this object
+            AudioSource[] sources = GetComponents<AudioSource>();
+            
+            if (sources.Length >= 3)
+            {
+                musicSource = sources[0];
+                sfxSource = sources[1];
+                slowMoSource = sources[2];
+            }
+            else
+            {
+                Debug.LogError("CRITICAL: AudioManager needs exactly 3 Audio Source components attached to it!");
+            }
         }
         else
         {
@@ -45,6 +59,7 @@ public class AudioManager : MonoBehaviour
 
     public void PlayParrySound()
     {
+        Debug.Log("AudioManager: Playing Parry Sound!");
         if (sfxSource != null && parryClang != null)
         {
             sfxSource.PlayOneShot(parryClang); 
@@ -53,6 +68,7 @@ public class AudioManager : MonoBehaviour
 
     public void PlaySlowMoEntry()
     {
+        Debug.Log("AudioManager: Playing Slow Mo Whoosh!");
         if (slowMoSource != null && slowMoWhoosh != null)
         {
             slowMoSource.PlayOneShot(slowMoWhoosh);
@@ -61,7 +77,8 @@ public class AudioManager : MonoBehaviour
     
     public void PlayPlayerHit()
     {
-         if (sfxSource != null && playerHit != null)
+        Debug.Log("AudioManager: Playing Player Hit Sound!");
+        if (sfxSource != null && playerHit != null)
         {
             sfxSource.PlayOneShot(playerHit);
         }

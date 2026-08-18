@@ -13,17 +13,16 @@ public class GiantHandController : MonoBehaviour
     private bool isRetreating = false;
     private Vector3 startPosition;
 
-    private void Start() { startPosition = transform.position; }
-
-    public void TriggerAttack()
+    public void TriggerAttack(Vector3 newStartPosition)
     {
         if (!isAttacking && !isRetreating)
         {
-            isAttacking = true;
-            Debug.Log("Giant Hand Incoming!");
+            gameObject.SetActive(true); 
             
-            // This line plays the slow-mo sound!
-            // AudioManager.Instance.PlaySlowMoEntry(); 
+            transform.position = newStartPosition; 
+            startPosition = newStartPosition;      
+
+            isAttacking = true;
             
             FindAnyObjectByType<QTEManager>().StartQTE();
         }
@@ -57,14 +56,13 @@ public class GiantHandController : MonoBehaviour
 
     public void DeflectHand()
     {
-        Debug.Log("Hand Deflected!");
         isAttacking = false;
         isRetreating = true;
     }
 
     public void HandHitPlayer()
     {
-        Debug.Log("Player got squashed!");
         isAttacking = false;
+        FindAnyObjectByType<GameManager>().TriggerGameOver("CRUSHED BY THE HAND!");
     }
 }
