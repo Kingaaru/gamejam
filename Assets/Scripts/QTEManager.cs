@@ -98,10 +98,10 @@ public class QTEManager : MonoBehaviour
         TimeManager.Instance.ResetTime();
         
         // This line plays the successful parry sound!
-        AudioManager.Instance.PlayParrySound();
+        // AudioManager.Instance.PlayParrySound();
         
         Debug.Log("MASSIVE PARRY! Speed boost applied.");
-        FindObjectOfType<GiantHandController>().DeflectHand();
+        FindAnyObjectByType<GiantHandController>().DeflectHand();
     }
 
     private void ParryFailed(string reason)
@@ -111,9 +111,9 @@ public class QTEManager : MonoBehaviour
         TimeManager.Instance.ResetTime();
         
         // This line plays the damage sound!
-        AudioManager.Instance.PlayPlayerHit();
+        // AudioManager.Instance.PlayPlayerHit();
         
         Debug.Log("PARRY FAILED: " + reason + " - Player takes damage!");
-        FindObjectOfType<GiantHandController>().HandHitPlayer();
+        FindAnyObjectByType<GiantHandController>().HandHitPlayer();
     }
 }

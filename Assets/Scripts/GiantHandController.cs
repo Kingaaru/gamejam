@@ -23,9 +23,9 @@ public class GiantHandController : MonoBehaviour
             Debug.Log("Giant Hand Incoming!");
             
             // This line plays the slow-mo sound!
-            AudioManager.Instance.PlaySlowMoEntry(); 
+            // AudioManager.Instance.PlaySlowMoEntry(); 
             
-            FindObjectOfType<QTEManager>().StartQTE();
+            FindAnyObjectByType<QTEManager>().StartQTE();
         }
     }
 
