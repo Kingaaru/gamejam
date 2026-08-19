@@ -97,4 +97,30 @@ public class GameManager : MonoBehaviour
             finalScoreText.text = deathReason + "\nFINAL SCORE: " + Mathf.FloorToInt(currentScore).ToString();
         }
     }
+
+        public void TriggerGameWon(string winMessage)
+    {
+        if (isGameOver) return;
+
+        isGameOver = true;
+        isGamePlaying = false;
+
+        // Reuse the Game Over panel, but for a victory!
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        if (gameHUD != null) gameHUD.SetActive(false);
+
+        // Freeze everything
+        Time.timeScale = 0f;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        if (finalScoreText != null)
+        {
+            // Display the custom win message in green (using rich text)
+            finalScoreText.text = "<color=#00FF00>" + winMessage + "</color>\nFINAL SCORE: " + Mathf.FloorToInt(currentScore).ToString();
+        }
+    }
+
 }
+
