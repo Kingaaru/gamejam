@@ -45,14 +45,16 @@ public class ProceduralLava : MonoBehaviour
 
     void Update()
     {
-        uvOffset.x += scrollSpeedX * Time.deltaTime;
-        uvOffset.y += scrollSpeedY * Time.deltaTime;
+        // Unscaled time allows the lava to keep flowing even when Time.timeScale is 0!
+        uvOffset.x += scrollSpeedX * Time.unscaledDeltaTime;
+        uvOffset.y += scrollSpeedY * Time.unscaledDeltaTime;
         
         if (lavaMaterial != null)
         {
             lavaMaterial.mainTextureOffset = uvOffset;
         }
     }
+
 
     void GenerateLavaPattern()
     {

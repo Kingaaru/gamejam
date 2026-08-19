@@ -117,15 +117,36 @@ public class QTEManager : MonoBehaviour
         }
     }
 
-    private IEnumerator PunchScaleAnimation(Transform iconTransform)
+        private IEnumerator PunchScaleAnimation(Transform iconTransform)
     {
         float duration = 0.15f, elapsed = 0f;
-        Vector3 orig = Vector3.one, punch = Vector3.one * 1.4f;
-        while (elapsed < duration) { elapsed += Time.unscaledDeltaTime; iconTransform.localScale = Vector3.Lerp(orig, punch, elapsed / duration); yield return null; }
+        
+        // 1. Grab the exact smaller scale you set in the Inspector
+        Vector3 orig = iconTransform.localScale; 
+        
+        // 2. Make the punch size relative to your custom size (e.g., 20% bigger instead of a massive hardcoded 1.4)
+        Vector3 punch = orig * 1.2f; 
+        
+        while (elapsed < duration) 
+        { 
+            elapsed += Time.unscaledDeltaTime; 
+            iconTransform.localScale = Vector3.Lerp(orig, punch, elapsed / duration); 
+            yield return null; 
+        }
+        
         elapsed = 0f;
-        while (elapsed < duration) { elapsed += Time.unscaledDeltaTime; iconTransform.localScale = Vector3.Lerp(punch, orig, elapsed / duration); yield return null; }
+        
+        while (elapsed < duration) 
+        { 
+            elapsed += Time.unscaledDeltaTime; 
+            iconTransform.localScale = Vector3.Lerp(punch, orig, elapsed / duration); 
+            yield return null; 
+        }
+        
+        // 3. Reset back to your custom Inspector size!
         iconTransform.localScale = orig;
     }
+
 
     private void ParrySuccess() { isQTEActive = false; StartCoroutine(EndQTE(true)); }
     private void ParryFailed(string reason) { isQTEActive = false; StartCoroutine(EndQTE(false)); }

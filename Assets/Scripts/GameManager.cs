@@ -3,46 +3,47 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("UI References")]
-    public TextMeshProUGUI scoreText;
+    [Header("Menu & UI References")]
+    public GameObject mainMenuPanel;
+    public GameObject gameHUD; 
     public GameObject gameOverPanel;
-    public TextMeshProUGUI finalScoreText; 
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI finalScoreText;
+
+    [Header("Gameplay References")]
+    public MonoBehaviour playerMovementScript; 
+    
+    [Tooltip("Drag your MouseLook / Camera rotation script here")]
+    public MonoBehaviour mouseLookScript; 
 
     private float currentScore = 0f;
     private bool isGameOver = false;
-    private bool gameStarted = false;
+    private bool isGamePlaying = false;
 
     void Start()
     {
-        Time.timeScale = 1f; 
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
-        
-        currentScore = 0f;
-        gameStarted = false;
+        // 1. FREEZE TIME: This instantly stops the crasher, physics, and gravity.
+        Time.timeScale = 0f;
 
-        // Force UI to show 0 immediately on load
-        if (scoreText != null)
-        {
-            scoreText.text = "SCORE: 0";
-        }
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+        if (gameHUD != null) gameHUD.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+
+        // 2. DISABLE SCRIPTS: Stop player from moving or looking around
+        if (playerMovementScript != null) playerMovementScript.enabled = false;
+        if (mouseLookScript != null) mouseLookScript.enabled = false;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        currentScore = 0f;
+        isGamePlaying = false;
     }
 
     void Update()
     {
-        if (isGameOver) return;
+        if (isGameOver || !isGamePlaying) return;
 
-        // Wait until the player gives input (presses any key or clicks) to start scoring
-        if (!gameStarted)
-        {
-            if (Input.anyKeyDown || Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.1f || Mathf.Abs(Input.GetAxisRaw("Vertical")) > 0.1f)
-            {
-                gameStarted = true;
-                currentScore = 0f; // Force reset to exact zero the moment movement begins
-            }
-            return;
-        }
-
-        // Increment score now that player has actively started playing
         currentScore += Time.unscaledDeltaTime * 10f;
 
         if (scoreText != null)
@@ -51,14 +52,42 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void StartGame()
+    {
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (gameHUD != null) gameHUD.SetActive(true);
+
+        // Turn the scripts back on
+        if (playerMovementScript != null) playerMovementScript.enabled = true;
+        if (mouseLookScript != null) mouseLookScript.enabled = true;
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        isGamePlaying = true;
+        currentScore = 0f;
+        
+        // 3. UNFREEZE TIME: The crasher and physics will now activate!
+        Time.timeScale = 1f;
+    }
+
+    public void QuitGame()
+    {
+        Debug.Log("Game is Exiting...");
+        Application.Quit();
+    }
+
     public void TriggerGameOver(string deathReason)
     {
         if (isGameOver) return;
 
         isGameOver = true;
+        isGamePlaying = false;
+
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
-        
-        Time.timeScale = 0f; 
+        if (gameHUD != null) gameHUD.SetActive(false);
+
+        Time.timeScale = 0f;
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
