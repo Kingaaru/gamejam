@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class GameManager : MonoBehaviour
@@ -9,27 +10,49 @@ public class GameManager : MonoBehaviour
     public GameObject gameOverPanel;
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI finalScoreText;
+    
+    [Tooltip("Drag your Lobby Coins Text UI here")]
+    public TextMeshProUGUI lobbyCoinsText; 
 
     [Header("Gameplay References")]
     public MonoBehaviour playerMovementScript; 
-    
-    [Tooltip("Drag your MouseLook / Camera rotation script here")]
     public MonoBehaviour mouseLookScript; 
 
+    [Header("Lives System")]
+    public int currentRedLives = 3;
+    public int currentBlueLives = 0;
+    
+    public Image[] redHeartIcons; 
+    public Image[] blueHeartIcons; 
+    [Header("Audio")]
+    public AudioClip damageSound;
+
     private float currentScore = 0f;
-    private bool isGameOver = false;
+    public bool isGameOver = false; // Made public so the player knows when to respawn
     private bool isGamePlaying = false;
 
     void Start()
     {
-        // 1. FREEZE TIME: This instantly stops the crasher, physics, and gravity.
         Time.timeScale = 0f;
+
+        // 1. DEFAULT ARMOR FIX: Reset blue lives and ensure default is owned
+        PlayerPrefs.SetInt("BonusLives", 0);
+        PlayerPrefs.SetInt("Default Armor_Unlocked", 1);
+        currentRedLives = 3;
+        currentBlueLives = 0; 
+        UpdateHeartsUI();
+
+        // 2. COINS FIX: Show coins in the lobby
+        if (lobbyCoinsText != null)
+        {
+            lobbyCoinsText.gameObject.SetActive(true);
+            lobbyCoinsText.text = "COINS: " + PlayerPrefs.GetInt("TotalCoins", 0).ToString();
+        }
 
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
         if (gameHUD != null) gameHUD.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
 
-        // 2. DISABLE SCRIPTS: Stop player from moving or looking around
         if (playerMovementScript != null) playerMovementScript.enabled = false;
         if (mouseLookScript != null) mouseLookScript.enabled = false;
 
@@ -38,6 +61,7 @@ public class GameManager : MonoBehaviour
 
         currentScore = 0f;
         isGamePlaying = false;
+        isGameOver = false;
     }
 
     void Update()
@@ -52,35 +76,70 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void ApplyArmorLives(int extraLives)
+    {
+        currentBlueLives = extraLives;
+        UpdateHeartsUI();
+    }
+
+    // THE FIX: Route all damage through this, and pass a custom death reason!
+    public void TakeDamage(string deathReason = "OUT OF LIVES!")
+    {
+        if (isGameOver) return;
+
+        // THE FIX: Play the sound effect directly at the camera's location!
+        if (damageSound != null)
+        {
+            AudioSource.PlayClipAtPoint(damageSound, Camera.main.transform.position);
+        }
+
+        if (currentBlueLives > 0)
+        {
+            currentBlueLives--; // Break armor first
+        }
+        else
+        {
+            currentRedLives--; // Then break base health
+        }
+
+        UpdateHeartsUI();
+
+        if (currentRedLives <= 0)
+        {
+            TriggerGameOver(deathReason);
+        }
+    }
+
+    private void UpdateHeartsUI()
+    {
+        for (int i = 0; i < redHeartIcons.Length; i++) redHeartIcons[i].enabled = i < currentRedLives;
+        for (int i = 0; i < blueHeartIcons.Length; i++) blueHeartIcons[i].enabled = i < currentBlueLives;
+    }
+
     public void StartGame()
     {
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
         if (gameHUD != null) gameHUD.SetActive(true);
 
-        // Turn the scripts back on
         if (playerMovementScript != null) playerMovementScript.enabled = true;
         if (mouseLookScript != null) mouseLookScript.enabled = true;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
-        isGamePlaying = true;
-        currentScore = 0f;
         
-        // 3. UNFREEZE TIME: The crasher and physics will now activate!
         Time.timeScale = 1f;
     }
 
-    public void QuitGame()
+    public void StartScoring()
     {
-        Debug.Log("Game is Exiting...");
-        Application.Quit();
+        isGamePlaying = true;
+        // HIDE COINS WHEN RUN STARTS
+        if (lobbyCoinsText != null) lobbyCoinsText.gameObject.SetActive(false); 
     }
 
     public void TriggerGameOver(string deathReason)
     {
         if (isGameOver) return;
-
         isGameOver = true;
         isGamePlaying = false;
 
@@ -88,7 +147,6 @@ public class GameManager : MonoBehaviour
         if (gameHUD != null) gameHUD.SetActive(false);
 
         Time.timeScale = 0f;
-
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -96,31 +154,14 @@ public class GameManager : MonoBehaviour
         {
             finalScoreText.text = deathReason + "\nFINAL SCORE: " + Mathf.FloorToInt(currentScore).ToString();
         }
+        SaveRunScore();
     }
 
-        public void TriggerGameWon(string winMessage)
+    private void SaveRunScore()
     {
-        if (isGameOver) return;
-
-        isGameOver = true;
-        isGamePlaying = false;
-
-        // Reuse the Game Over panel, but for a victory!
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
-        if (gameHUD != null) gameHUD.SetActive(false);
-
-        // Freeze everything
-        Time.timeScale = 0f;
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-        if (finalScoreText != null)
-        {
-            // Display the custom win message in green (using rich text)
-            finalScoreText.text = "<color=#00FF00>" + winMessage + "</color>\nFINAL SCORE: " + Mathf.FloorToInt(currentScore).ToString();
-        }
+        int runScore = Mathf.FloorToInt(currentScore);
+        int currentBank = PlayerPrefs.GetInt("TotalCoins", 0);
+        PlayerPrefs.SetInt("TotalCoins", currentBank + runScore);
+        PlayerPrefs.Save();
     }
-
 }
-

@@ -80,6 +80,6 @@ public class GiantHandController : MonoBehaviour
     public void HandHitPlayer()
     {
         isCreeping = false;
-        FindAnyObjectByType<GameManager>().TriggerGameOver("CRUSHED BY THE HAND!");
+        FindAnyObjectByType<GameManager>().TakeDamage("CRUSHED BY THE HAND!");
     }
 }

@@ -28,7 +28,7 @@ public class Obstacle : MonoBehaviour
         GameManager gm = FindAnyObjectByType<GameManager>();
         if (gm != null)
         {
-            gm.TriggerGameOver(deathMessage);
+            gm.TakeDamage(deathMessage);
         }
         else
         {

@@ -14,7 +14,11 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask whatIsGround;
     private bool grounded;
 
-    public Transform playerCamera; // Look here! We swapped Orientation for the Camera
+    [Header("Fall Death Check")]
+    [Tooltip("If the player drops below this Y height, they die.")]
+    public float fallThreshold = -10f; 
+
+    public Transform playerCamera; 
     private float horizontalInput;
     private float verticalInput;
     private Vector3 moveDirection;
@@ -28,6 +32,24 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        // 1. THE RESPAWN FIX
+        if (transform.position.y < fallThreshold)
+        {
+            GameManager gm = FindAnyObjectByType<GameManager>();
+            
+            // Take 1 life away
+            gm.TakeDamage("FELL INTO THE MAGMA!");
+            
+            // If we didn't get a Game Over, RESPAWN!
+            if (!gm.isGameOver)
+            {
+                // Teleport the player 10 meters forward and drop them from the sky onto the track
+                transform.position = new Vector3(transform.position.x + 10f, 5f, 0f);
+                rb.linearVelocity = Vector3.zero; // Instantly kill falling momentum
+            }
+            return; 
+        }
+
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
         MyInput();
@@ -57,11 +79,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePlayer()
     {
-        // Calculate direction directly from where the camera is looking
         Vector3 forward = playerCamera.forward;
         Vector3 right = playerCamera.right;
         
-        // Flatten the Y axis so looking up doesn't make you fly into the sky
         forward.y = 0f;
         right.y = 0f;
 
