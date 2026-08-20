@@ -1,7 +1,11 @@
+
 using UnityEngine;
 
 public class ShopItem : MonoBehaviour
 {
+
+    [Header("All Hand Weapons to Clear")]
+    public GameObject[] allHandWeapons; // Drag EVERY hand weapon into this list in the Inspector
     [Header("Item Settings")]
     public string itemName;
     public int cost;
@@ -51,8 +55,20 @@ public class ShopItem : MonoBehaviour
         }
         else if (weaponToEquip != null)
         {
+            // The newest, warning-free syntax for the latest Unity engine
+            ShopItem[] allShopItems = FindObjectsByType<ShopItem>(FindObjectsInactive.Include);
+            
+            // Turn OFF every single hand weapon tied to any shop item first
+            foreach (ShopItem item in allShopItems)
+            {
+                if (item.weaponToEquip != null)
+                {
+                    item.weaponToEquip.SetActive(false);
+                }
+            }
+
+            // Turn ON only the newly selected weapon
             weaponToEquip.SetActive(true);
-            Debug.Log("Equipped " + itemName);
         }
     }
 }
