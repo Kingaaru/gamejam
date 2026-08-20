@@ -2,24 +2,24 @@ using UnityEngine;
 
 public class MouseLook : MonoBehaviour
 {
-    public float sensX = 400f;
-    public float sensY = 400f;
+    [Header("Sensitivity")]
+    public float sensX = 200f;
+    public float sensY = 200f;
 
-    private float xRotation;
-    private float yRotation;
+    private float xRotation = 0f;
+    private float yRotation = 0f;
 
     void Start()
     {
-        // Lock the cursor to the center of the screen and hide it
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
     void Update()
     {
-        // Get mouse input
-        float mouseX = Input.GetAxisRaw("Mouse X") * Time.deltaTime * sensX;
-        float mouseY = Input.GetAxisRaw("Mouse Y") * Time.deltaTime * sensY;
+        // Use unscaledDeltaTime to prevent sudden jumps during lag or frame drops
+        float mouseX = Input.GetAxis("Mouse X") * sensX * Time.unscaledDeltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * sensY * Time.unscaledDeltaTime;
 
         yRotation += mouseX;
         xRotation -= mouseY;
@@ -27,7 +27,7 @@ public class MouseLook : MonoBehaviour
         // Clamp the camera so you can't look past straight up or straight down
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-        // Rotate only the camera on both X and Y axes
+        // Apply smooth rotation to the camera
         transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0);
     }
 }

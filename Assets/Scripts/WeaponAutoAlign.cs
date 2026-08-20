@@ -3,18 +3,29 @@ using UnityEngine;
 public class WeaponAutoAlign : MonoBehaviour
 {
     [Header("First-Person Screen Position")]
-    public Vector3 targetLocalPosition = new Vector3(0.4f, -0.4f, 0.7f); // Bottom right of screen
+    public Vector3 targetLocalPosition = new Vector3(0.4f, -0.4f, 0.7f); 
     
-    [Header("Rotation Offset (Leaned Forward)")]
-    [Tooltip("Adjust the X rotation here to make all weapons lean forward uniformly")]
-    public Vector3 leanRotation = new Vector3(15f, 0f, 0f); 
+    [Header("Rotation Fixer (Tweak X, Y, Z in Inspector!)")]
+    public Vector3 customRotation = new Vector3(0f, 0f, 0f); 
+
+    [Header("Scale Fixer (Make weapons bigger/smaller)")]
+    [Tooltip("Default is 1,1,1. Lower values (like 0.5, 0.5, 0.5) make the weapon smaller.")]
+    public Vector3 customScale = new Vector3(1f, 1f, 1f);
 
     void OnEnable()
     {
-        // Instantly snap to the correct hand position on screen
+        ApplyTransform();
+    }
+
+    void OnValidate()
+    {
+        ApplyTransform();
+    }
+
+    public void ApplyTransform()
+    {
         transform.localPosition = targetLocalPosition;
-        
-        // Force them upright and leaning forward uniformly
-        transform.localRotation = Quaternion.Euler(leanRotation);
+        transform.localRotation = Quaternion.Euler(customRotation);
+        transform.localScale = customScale; // Automatically updates the size live!
     }
 }
